@@ -7,23 +7,35 @@ class DeckController {
     try {
       const { business, goal } = req.body;
 
-      if (!business || !goal) {
+      if (!business || typeof business !== "object") {
         return res.status(400).json({
-          error: "business and goal are required"
+          error: "Invalid business context",
+          detail:
+            "The business field is required and must be an object.",
+        });
+      }
+
+      if (!goal || typeof goal !== "string") {
+        return res.status(400).json({
+          error: "Invalid goal",
+          detail:
+            "The goal field is required and must be a string.",
         });
       }
 
       const deck = await this.deckService.generateDeck({
         business,
-        goal
+        goal,
       });
 
-      res.json(deck);
+      return res.status(200).json(deck);
     } catch (error) {
+      console.error("Deck generation failed:");
       console.error(error);
 
-      res.status(500).json({
-        error: "Failed to generate deck"
+      return res.status(500).json({
+        error: "Failed to generate deck",
+        detail: error.message,
       });
     }
   };

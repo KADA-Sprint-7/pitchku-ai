@@ -1,48 +1,52 @@
-const AIProvider = require("./ai.provider");
-
-class OllamaProvider extends AIProvider {
+class OllamaProvider {
   constructor() {
-    super();
+    this.baseUrl =
+      process.env.OLLAMA_BASE_URL ||
+      "http://127.0.0.1:11434";
 
-    this.baseUrl = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
-    this.model = process.env.OLLAMA_MODEL || "qwen3:8b";
+    this.model =
+      process.env.OLLAMA_MODEL ||
+      "llama3.1";
   }
 
-  async generate({ system, prompt }) {
-    const response = await fetch(`${this.baseUrl}/api/chat`, {
-      method: "POST",
-
-      headers: {
-        "Content-Type": "application/json"
-      },
-
-      body: JSON.stringify({
-        model: this.model,
-
-        messages: [
-          {
-            role: "system",
-            content: system
-          },
-          {
-            role: "user",
-            content: prompt
+  async generate(prompt) {
+    const response = await fetch(
+      `${this.baseUrl}/api/generate`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: this.model,
+          prompt,
+          stream: false,
+          format: "json",
+          options: {
+            temperature: 0.2,
+            num_predict: 12000
           }
-        ],
-
-        stream: false,
-
-        format: "json"
-      })
-    });
+        })
+      }
+    );
 
     if (!response.ok) {
-      throw new Error(`Ollama request failed: ${response.status}`);
+      const errorText = await response.text();
+
+      throw new Error(
+        `Ollama request failed: ${response.status} ${errorText}`
+      );
     }
 
     const data = await response.json();
 
-    return data.message.content;
+    if (!data.response) {
+      throw new Error(
+        "Ollama returned no response text."
+      );
+    }
+
+    return data.response;
   }
 }
 
