@@ -1,4 +1,6 @@
+
 const OllamaProvider = require("./ollama.provider");
+const EliceProvider = require("./elice.provider");
 
 function createAIProvider() {
   const provider =
@@ -6,6 +8,10 @@ function createAIProvider() {
 
   if (provider === "ollama") {
     return new OllamaProvider();
+  }
+
+  if (provider === "elice") {
+    return new EliceProvider();
   }
 
   throw new Error(
